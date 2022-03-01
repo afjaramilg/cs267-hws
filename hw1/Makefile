@@ -8,7 +8,7 @@ CFLAGS = -Wall -std=gnu99 $(OPT)
 LDLIBS = -lrt  -I$(MKLROOT)/include -Wl,-L$(MKLROOT)/lib/intel64/ -lmkl_intel_lp64 -lmkl_core -lmkl_sequential -lpthread -lm -ldl
 
 targets = benchmark-naive benchmark-blocked benchmark-blas benchmark-afjaramilg test
-objects = benchmark.o dgemm-naive.o dgemm-blocked.o dgemm-blas.o dgemm-afjaramilg.o
+objects = benchmark.o dgemm-naive.o dgemm-blocked.o dgemm-blas.o dgemm-afjaramilg.o test.o
 
 .PHONY : default
 default : all

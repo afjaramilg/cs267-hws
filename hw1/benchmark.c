@@ -81,12 +81,13 @@ int main(int argc, char** argv) {
           1025};*/
 
         /* A representative subset of the first list. Currently uncommented. */
-        /*{3,   31,  32,  96,  97,  127, 128, 129, 191, 192, 229, 255,
+        {3,   31,  32,  96,  97,  127, 128, 129, 191, 192, 229, 255,
          256, 257, 319, 320, 321, 417, 479, 480, 511, 512, 639, 640,
-         767, 768, 769, 799, 800, 801, 831, 832, 833, 864};*/
+         767, 768, 769, 799, 800, 801, 831, 832, 833, 864};
 
         /* only multiples of 32 */
-        {32, 64, 96, 128, 160, 192, 224};
+        //{4, 32, 64, 96, 128, 160, 192, 224};
+        //{4};
 
     int nsizes = sizeof(test_sizes) / sizeof(test_sizes[0]);
 
@@ -162,10 +163,10 @@ int main(int argc, char** argv) {
 
         /* If any element in C is positive, then something went wrong in
          * square_dgemm */
-        /*for (int i = 0; i < n * n; ++i)*/
-            /*if (C[i] > 0)*/
-                /*die("*** FAILURE *** Error in matrix multiply exceeds "*/
-                    /*"componentwise error bounds.\n");*/
+        for (int i = 0; i < n * n; ++i)
+            if (C[i] > 0)
+                die("*** FAILURE *** Error in matrix multiply exceeds "
+                    "componentwise error bounds.\n");
     }
 
     /* Calculating average percentage of peak reached by algorithm */

@@ -1,0 +1,6 @@
+hw1/OpenBLAS
+hw1/benchmark-afjaramilg
+hw1/benchmark-blocked
+hw1/benchmark-naive
+hw1/test
+hw1/*.o

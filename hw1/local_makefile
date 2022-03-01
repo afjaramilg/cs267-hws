@@ -1,0 +1,35 @@
+# On Bridges we will check versus your performance versus Intel MKL library's BLAS. 
+
+CC = cc 
+OPT = -O3 -mavx2 -funroll-loops
+CFLAGS = -g -Wall -std=gnu99  -ftree-vectorizer-verbose=3 $(OPT)
+LDLIBS = -lrt  $(shell pwd)/OpenBLAS/libopenblas.a  -lpthread -lm -ldl
+
+targets = benchmark-afjaramilg benchmark-blocked benchmark-naive test
+objects = benchmark.o dgemm-afjaramilg.o dgemm-blocked.o dgemm-naive.o test.o
+
+.PHONY : default
+default : all
+
+.PHONY : all
+all : clean $(targets)
+
+test : test.o
+	$(CC) -o $@ $^ $(LDLIBS)
+
+#benchmark-afjaramilg : benchmark.o dgemm-afjaramilg.o
+	#$(CC) -o $@ $^ $(LDLIBS)
+
+#benchmark-blocked : benchmark.o dgemm-blocked.o
+	#$(CC) -o $@ $^ $(LDLIBS)
+
+benchmark-% : benchmark.o dgemm-%.o
+	$(CC) -o $@ $^ $(LDLIBS)
+
+
+%.o : %.c
+	$(CC) -c $(CFLAGS) $<
+
+.PHONY : clean
+clean:
+	rm -f $(targets) $(objects) *.stdout
