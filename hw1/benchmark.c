@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
          767, 768, 769, 799, 800, 801, 831, 832, 833, 864};
 
         /* only multiples of 32 */
-        //{4, 32, 64, 96, 128, 160, 192, 224};
+        //{32, 64, 96, 128, 160, 192, 224};
         //{4};
 
     int nsizes = sizeof(test_sizes) / sizeof(test_sizes[0]);

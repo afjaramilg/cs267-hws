@@ -6,7 +6,7 @@
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 #define B_BLOCK_ROWS 32
-#define B_BLOCK_COLS 32
+#define B_BLOCK_COLS 24
 
 const char* dgemm_desc =
     "dgemm using blocked algorithm, but with loops in different order";
@@ -20,11 +20,11 @@ static void do_block_fixed(const int lda, const double* A, const double* B,
                            double* __restrict__ C) {
     for (int col_b = 0; col_b < B_BLOCK_COLS; ++col_b) {
         for (int row_b = 0; row_b < B_BLOCK_ROWS; ++row_b) {
-            // double b_block_val = B_BUFFER[(col_b * B_BLOCK_ROWS) + row_b];
+//            double b_block_val = B_BUFFER[(col_b * B_BLOCK_ROWS) + row_b];
             double b_block_val = B[(col_b * lda) + row_b];
 
-            for (int row_a = 0; row_a < B_BLOCK_ROWS; ++row_a) {
-                C[(col_b * lda) + row_a] +=
+            for (int row_a = 0; row_a < B_BLOCK_COLS; ++row_a) {
+                C[(col_b * lda) + row_a] = C[(col_b * lda) + row_a] +
                     A[(row_b * lda) + row_a] * b_block_val;
             }
         }
@@ -35,11 +35,11 @@ static void do_block(const int lda, const double* A, const double* B,
                      double* __restrict__ C, const int rows_ba) {
     for (int col_b = 0; col_b < B_BUFFER_COLS; ++col_b) {
         for (int row_b = 0; row_b < B_BUFFER_ROWS; ++row_b) {
-            // double b_block_val = B_BUFFER[(col_b * B_BUFFER_ROWS) + row_b];
+            //double b_block_val = B_BUFFER[(col_b * B_BUFFER_ROWS) + row_b];
             double b_block_val = B[(col_b * lda) + row_b];
 
             for (int row_a = 0; row_a < rows_ba; ++row_a) {
-                C[(col_b * lda) + row_a] +=
+                C[(col_b * lda) + row_a] = C[(col_b * lda) + row_a] +
                     A[(row_b * lda) + row_a] * b_block_val;
             }
         }
@@ -56,13 +56,13 @@ void square_dgemm(const int lda, const double* A, const double* B,
 
             const double* B_CPY = B + ((col_b * lda) + row_b);
 
-
-            //for (int cb = 0; cb < B_BUFFER_COLS; ++cb) {
-                //for (int rb = 0; rb < B_BUFFER_ROWS; ++rb) {
-                    //B_BUFFER[(cb * B_BUFFER_ROWS) + rb] =
-                        //B_CPY[(cb * lda) + rb];
-                //}
-            //}
+            /*
+            for (int cb = 0; cb < B_BUFFER_COLS; ++cb) {
+                for (int rb = 0; rb < B_BUFFER_ROWS; ++rb) {
+                    B_BUFFER[(cb * B_BUFFER_ROWS) + rb] =
+                        B_CPY[(cb * lda) + rb];
+                }
+            }*/
 
             for (int row_a = 0; row_a < lda; row_a += B_BLOCK_COLS) {
                 int rows_ba = min(B_BLOCK_COLS, lda - row_a);
