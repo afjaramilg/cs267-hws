@@ -1,7 +1,7 @@
 # On Bridges we will check versus your performance versus Intel MKL library's BLAS. 
 
 CC = cc 
-OPT = -O3 -mavx2 -funroll-loops
+OPT = -Ofast -mavx2 -funroll-loops -ftree-vectorize -ftree-loop-vectorize
 CFLAGS = -g -Wall -std=gnu99  -ftree-vectorizer-verbose=3 $(OPT)
 LDLIBS = -lrt  $(shell pwd)/OpenBLAS/libopenblas.a  -lpthread -lm -ldl
 
