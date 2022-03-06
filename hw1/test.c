@@ -18,7 +18,7 @@ TRANSPOSE A
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 #define B_BLOCK_ROWS 32
-#define B_BLOCK_COLS 32
+#define B_BLOCK_COLS 24
 
 const char* dgemm_desc =
     "dgemm using blocked algorithm, but with loops in different order";
@@ -31,28 +31,31 @@ static int B_BUFFER_ROWS, B_BUFFER_COLS;
 static void do_block_fixed(const int lda, const double* A, const double* B,
                            double* __restrict__ C) {
     for (int col_b = 0; col_b < B_BLOCK_COLS; ++col_b) {
-        for (int row_a = 0; row_a < B_BLOCK_ROWS; ++row_a) {
+        for (int row_a = 0; row_a < B_BLOCK_COLS; ++row_a) {
             for (int k = 0; k < B_BLOCK_ROWS; ++k) {
                 // double b_block_val = B_BUFFER[(col_b * B_BLOCK_ROWS) +
                 // row_b];
-                double b_block_val = B[(col_b * lda) + k];
+                // double b_block_val = B[(col_b * lda) + k];
 
-                C[(col_b * lda) + row_a] += A[(row_a * lda) + k] * b_block_val;
+                C[(col_b * lda) + row_a] +=
+                    A[(row_a * lda) + k] * B[(col_b * lda) + k];
             }
         }
     }
 }
 
 static void do_block(const int lda, const double* A, const double* B,
-                     double* __restrict__ C, const int rows_ba) {
-    for (int col_b = 0; col_b < B_BUFFER_COLS; ++col_b) {
-        for (int row_a = 0; row_a < rows_ba; ++row_a) {
-            for (int k = 0; k < B_BUFFER_ROWS; ++k) {
+                     double* __restrict__ C, const int rows_a, const int cols_b,
+                     const int max_k) {
+    for (int col_b = 0; col_b < cols_b; ++col_b) {
+        for (int row_a = 0; row_a < rows_a; ++row_a) {
+            for (int k = 0; k < max_k; ++k) {
                 // double b_block_val = B_BUFFER[(col_b * B_BUFFER_ROWS) +
                 // row_b];
-                double b_block_val = B[(col_b * lda) + k];
+                // double b_block_val = B[(col_b * lda) + k];
 
-                C[(col_b * lda) + row_a] += A[(row_a * lda) + k] * b_block_val;
+                C[(col_b * lda) + row_a] +=
+                    A[(row_a * lda) + k] * B[(col_b * lda) + k];
             }
         }
     }
@@ -72,13 +75,13 @@ void square_dgemm(const int lda, const double* A, const double* B,
     inv_mat_inplace(lda, A);
 
     for (int col_b = 0; col_b < lda; col_b += B_BLOCK_COLS) {
-        B_BUFFER_COLS = min(B_BLOCK_COLS, lda - col_b);
+        int cols_b = min(B_BLOCK_COLS, lda - col_b);
 
         for (int row_a = 0; row_a < lda; row_a += B_BLOCK_COLS) {
-            int rows_ba = min(B_BLOCK_COLS, lda - row_a);
+            int rows_a = min(B_BLOCK_COLS, lda - row_a);
 
             for (int k = 0; k < lda; k += B_BLOCK_ROWS) {
-                B_BUFFER_ROWS = min(B_BLOCK_ROWS, lda - k);
+                int max_k = min(B_BLOCK_ROWS, lda - k);
 
                 const double* B_CPY = B + ((col_b * lda) + k);
 
@@ -90,13 +93,14 @@ void square_dgemm(const int lda, const double* A, const double* B,
                 //}
                 // printf("b:%i,%i  a:%i,%i\n", row_b, col_b, row_a, row_b);
 
-                if (B_BUFFER_ROWS == B_BLOCK_ROWS &&
-                    B_BUFFER_COLS == B_BLOCK_COLS && rows_ba == B_BLOCK_COLS)
+                if (max_k == B_BLOCK_ROWS && cols_b == B_BLOCK_COLS &&
+                    rows_a == B_BLOCK_COLS)
                     do_block_fixed(lda, A + ((row_a * lda) + k), B_CPY,
                                    C + ((col_b * lda) + row_a));
                 else
                     do_block(lda, A + ((row_a * lda) + k), B_CPY,
-                             C + ((col_b * lda) + row_a), rows_ba);
+                             C + ((col_b * lda) + row_a), rows_a, cols_b,
+                             max_k);
             }
         }
     }
@@ -104,6 +108,8 @@ void square_dgemm(const int lda, const double* A, const double* B,
     inv_mat_inplace(lda, A);
     // puts("----------------------------");
 }
+
+
  */
 
 /*=============================================================================
@@ -300,6 +306,8 @@ void square_dgemm(const int lda, const double* A, const double* B,
 }
 */
 
+#define SIMD_VEC_SZ 16
+
 #define B_BLOCK_ROWS (2)
 #define B_BLOCK_COLS (2)
 
@@ -362,7 +370,7 @@ static void unroll_dr(const int lda, const double* __restrict__ S,
     }
 }
 
-int main() {
+void test_mat_order_ops() {
     /*inv_mat(6, mat, mat2);*/
     for (int i = 0; i < TEST_MAT_LDA; ++i) {
         for (int j = 0; j < TEST_MAT_LDA; ++j)
@@ -378,3 +386,30 @@ int main() {
         printf("\n");
     }
 }
+
+void test_simd() {
+    __m256d dot_prod;
+    __m256d v1[4], v2[4];
+
+    
+    double a[SIMD_VEC_SZ] = {1.0, 2.0,  3.0,  4.0,  5.0,  6.0,  7.0,  8.0,
+                             9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0};
+
+    double b[SIMD_VEC_SZ] = {17.0, 18.0, 19.0, 20.0, 21.0, 22.0, 23.0, 24.0,
+                             25.0, 26.0, 27.0, 28.0, 29.0, 30.0, 31.0, 32.0};
+
+    double control = 0;
+    for (int i = 0; i < SIMD_VEC_SZ; ++i) control += a[i] * b[i];
+    
+    /*
+    v1[0] = _mm256d_loadu_pd(a);
+    v2[0] = _mm256d_loadu_pd(b);
+    v1[0] = _mm256_mul_pd(v1[0], v2[0]);
+    */
+
+    printf("v2 %f %f %f %f\n", v2[0], v2[1], v2[2], v2[3]);
+
+    printf("control %f\n", control);
+}
+
+int main() { test_simd(); }

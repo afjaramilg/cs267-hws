@@ -6,27 +6,60 @@
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 
 #define B_BLOCK_ROWS 32
-#define B_BLOCK_COLS 24
+#define B_BLOCK_COLS 32
 
 const char* dgemm_desc =
     "dgemm using blocked algorithm, but with loops in different order";
 
-static double B_BUFFER[B_BLOCK_COLS * B_BLOCK_ROWS];
-static int B_BUFFER_ROWS, B_BUFFER_COLS;
+// static double B_BUFFER[B_BLOCK_COLS * B_BLOCK_ROWS];
+// static int B_BUFFER_ROWS, B_BUFFER_COLS;
+
+static inline double m256d_horizontal_add(__m256d a) {
+    __m256d t1 = _mm256_hadd_pd(a, a);
+    __m128d t2 = _mm256_extractf128_pd(t1, 1);
+    __m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1), t2);
+    return _mm_cvtsd_f64(t3);
+}
 
 // normal 1-op-at-a-time block multiply where A, B and C are all column
 // major
 static void do_block_fixed(const int lda, const double* A, const double* B,
                            double* __restrict__ C) {
+    __m256d v1, v2, res[4], total;
+
     for (int col_b = 0; col_b < B_BLOCK_COLS; ++col_b) {
         for (int row_a = 0; row_a < B_BLOCK_COLS; ++row_a) {
-            for (int k = 0; k < B_BLOCK_ROWS; ++k) {
+            for (int k = 0; k < B_BLOCK_ROWS; k += 16) {
                 // double b_block_val = B_BUFFER[(col_b * B_BLOCK_ROWS) +
                 // row_b];
                 // double b_block_val = B[(col_b * lda) + k];
 
-                C[(col_b * lda) + row_a] +=
-                    A[(row_a * lda) + k] * B[(col_b * lda) + k];
+                double* START_A = A + (row_a * lda) + k;
+                double* START_B = B + (col_b * lda) + k;
+
+                v1 = _mm256_loadu_pd(START_A);
+                v2 = _mm256_loadu_pd(START_B);
+                res[0] = _mm256_mul_pd(v1, v2);
+
+                v1 = _mm256_loadu_pd(START_A + 4);
+                v2 = _mm256_loadu_pd(START_B + 4);
+                res[1] = _mm256_mul_pd(v1, v2);
+
+                v1 = _mm256_loadu_pd(START_A + 8);
+                v2 = _mm256_loadu_pd(START_B + 8);
+                res[2] = _mm256_mul_pd(v1, v2);
+
+
+                v1 = _mm256_loadu_pd(START_A + 12);
+                v2 = _mm256_loadu_pd(START_B + 12);
+                res[3] = _mm256_mul_pd(v1, v2);
+
+                total = _mm256_add_pd(res[0], res[1]);
+                total = _mm256_add_pd(total, res[2]);
+                total = _mm256_add_pd(total, res[3]);
+
+
+                C[(col_b * lda) + row_a] += m256d_horizontal_add(total);
             }
         }
     }
@@ -96,4 +129,3 @@ void square_dgemm(const int lda, const double* A, const double* B,
     inv_mat_inplace(lda, A);
     // puts("----------------------------");
 }
-
