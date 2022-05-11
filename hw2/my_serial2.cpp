@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
     init_particles(n, particles);
 
     // my parameters----------------------
-    const int GRID_SIDE = 3;
+    const int GRID_SIDE = 200;
     const double CUTOFF = 0.01;
     dcomp2d1 dcomp(GRID_SIDE, CUTOFF, space_size);
     // - ----------------------------------
@@ -45,32 +45,32 @@ int main(int argc, char **argv) {
     // border pointer comparison deltas
     const int64_t border_ptr_cd[8][5] = {
         // -- 0 --
-        {-8 * GRID_SIDE + 2, -8 * GRID_SIDE + 3, -8 * (GRID_SIDE - 1) + 4,
-         8 + 5, 8 + 6},
+        {8 + 5, 8 + 6, 8 * GRID_SIDE + 2, 8 * GRID_SIDE + 3,
+         8 * (GRID_SIDE + 1) + 4},
         //
         // -- 1 --
         {8 + 4, 8 + 5, 8 + 6},
         //
         // -- 2 --
-        {8 + 4, 8 + 5, 8 * GRID_SIDE, 8 * GRID_SIDE + 7,
-         8 * (GRID_SIDE + 1) + 6},
+        {-8 * GRID_SIDE, -8 * GRID_SIDE + 7, -8 * (GRID_SIDE - 1) + 6, 8 + 4,
+         8 + 5},
         //
         // -- 3 --
-        {8 * GRID_SIDE, 8 * GRID_SIDE + 6, 8 * GRID_SIDE + 7},
+        {-8 * GRID_SIDE, -8 * GRID_SIDE + 6, -8 * GRID_SIDE + 7},
         //
         // -- 4 --
-        {-8 + 1, -8 + 2, 8 * (GRID_SIDE - 1), 8 * GRID_SIDE + 6,
-         8 * GRID_SIDE + 7},
+        {-8 * (GRID_SIDE + 1), -8 * GRID_SIDE + 6, -8 * GRID_SIDE + 7, -8 + 1,
+         -8 + 2},
         //
         // -- 5 --
         {-8, -8 + 1, -8 + 2},
         //
         // -- 6 --
-        {-8 * (GRID_SIDE + 1), -8 * GRID_SIDE + 3, -8 * GRID_SIDE + 4, -8,
-         -8 + 1},
+        {-8, -8 + 1, 8 * (GRID_SIDE - 1) + 2, 8 * GRID_SIDE + 3,
+         8 * GRID_SIDE + 4},
         //
         // -- 7 --
-        {-8 * GRID_SIDE + 2, -8 * GRID_SIDE + 3, -8 * GRID_SIDE + 4}};
+        {8 * GRID_SIDE + 2, 8 * GRID_SIDE + 3, 8 * GRID_SIDE + 4}};
 
     //
     //  simulate a number of time steps
@@ -162,10 +162,6 @@ int main(int argc, char **argv) {
                 }
             }
         }
-
-        // !! DEBUG !!
-        // puts("--------------------");
-        // !! DEBUG !!
 
         //
         //  move particles
