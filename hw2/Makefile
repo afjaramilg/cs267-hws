@@ -14,21 +14,25 @@ CFLAGS = -O3
 LIBS =
 
 
-TARGETS = serial pthreads openmp autograder my_serial1 my_serial2 my_openmp
+TARGETS = serial pthreads openmp autograder my_serial1 my_serial2 my_serial3 \
+		  my_openmp
 
 all:	$(TARGETS)
 
 
-# my solutions
+# my solutions --------------
 my_openmp: my_openmp.o common.o dcomp2d1.o
 	$(CC) -o $@ $(LIBS) -fopenmp my_openmp.o dcomp2d1.o common.o
+
+my_serial3: my_serial3.o common.o
+	$(CC) -o $@ $(LIBS) -fopenmp my_serial3.o common.o
 
 my_serial2: my_serial2.o common.o dcomp2d1.o
 	$(CC) -o $@ $(LIBS) -fopenmp my_serial2.o dcomp2d1.o common.o
 
 my_serial1: my_serial1.o common.o dcomp2d1.o
 	$(CC) -o $@ $(LIBS) -fopenmp my_serial1.o dcomp2d1.o common.o
-# -------------------
+# ---------------------------
 
 serial: serial.o common.o
 	$(CC) -o $@ $(LIBS) serial.o common.o
@@ -46,9 +50,12 @@ mpi: mpi.o common.o
 	$(MPCC) -o $@ $(LIBS) $(MPILIBS) mpi.o common.o
 
 
-# my solutions
+# my solutions --------------
 my_openmp.o: my_openmp.cpp
 	$(CC) -c $(CFLAGS) my_openmp.cpp
+
+my_serial3.o: my_serial3.cpp
+	$(CC) -c $(CLFAGS) my_serial3.cpp
 
 my_serial2.o: my_serial2.cpp
 	$(CC) -c $(CFLAGS) my_serial2.cpp
@@ -58,7 +65,7 @@ my_serial1.o: my_serial1.cpp
 
 dcomp2d1.o: dcomp2d1.h dcomp2d1.cpp
 	$(CC) -c $(CFLAGS) dcomp2d1.cpp
-# -------------------
+# ---------------------------
 
 
 autograder.o: autograder.cpp common.h

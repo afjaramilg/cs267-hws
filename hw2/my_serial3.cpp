@@ -2,8 +2,12 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <algorithm>
 
 #include "common.h"
+#define cutoff 0.01
 
 //
 //  benchmarking program
@@ -34,6 +38,8 @@ int main(int argc, char **argv) {
     set_size(n);
     init_particles(n, particles);
 
+    auto sort_by_x = [](particle_t &a, particle_t &b) { return a.x < b.x; };
+
     //
     //  simulate a number of time steps
     //
@@ -43,17 +49,22 @@ int main(int argc, char **argv) {
         navg = 0;
         davg = 0.0;
         dmin = 1.0;
-        //
-        //  compute forces
-        //
 
-        for (int i = 0; i < n; i++) {
+        std::sort(particles, particles + n, sort_by_x);
+
+        for (int i = 0; i < n; ++i) {
             particles[i].ax = particles[i].ay = 0;
         }
-        for (int i = 0; i < n; i++) {
-             for (int j = i; j < n; j++) {
-                apply_force(particles[i], particles[j], &dmin, &davg, &navg);
-                apply_force(particles[j], particles[i], &dmin, &davg, &navg);
+
+        for (int i = 0; i < n; ++i) {
+            particle_t &pi = particles[i];
+
+            for (int j = i; j < n; ++j) {
+                particle_t &pj = particles[j];
+                if ((pj.x - pi.x) <= cutoff) {
+                    apply_force(pi, pj, &dmin, &davg, &navg);
+                    apply_force(pj, pi, &dmin, &davg, &navg);
+                }
             }
         }
 
