@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include <algorithm>
+#include <vector>
 
 #include "common.h"
 #define cutoff 0.01
@@ -38,7 +39,13 @@ int main(int argc, char **argv) {
     set_size(n);
     init_particles(n, particles);
 
-    auto sort_by_x = [](particle_t &a, particle_t &b) { return a.x < b.x; };
+    auto sort_by_x = [](particle_t &a, particle_t &b) {
+        return (a.x == b.x) ? a.y < b.y : a.x < b.x;
+    };
+
+    std::vector<std::vector<int>> slices;
+
+    long long useless_comps = 0;
 
     //
     //  simulate a number of time steps
@@ -52,10 +59,70 @@ int main(int argc, char **argv) {
 
         std::sort(particles, particles + n, sort_by_x);
 
+        double last_x = -1.0;
         for (int i = 0; i < n; ++i) {
-            particles[i].ax = particles[i].ay = 0;
+            particle_t &pi = particles[i];
+            pi.ax = pi.ay = 0;
+
+            if (pi.x > last_x) {
+                slices.push_back({});
+                last_x = pi.x;
+            }
+
+            slices.back().push_back(i);
         }
 
+
+        for (int i = 1; i < slices.size(); ++i) {
+            //printf("slice %i size %i\n", i, slices[i].size());
+
+            int pa_ind = slices[i - 1][0];
+            int pb_ind = slices[i][0];
+
+            particle_t &pa = particles[pa_ind];
+            particle_t &pb = particles[pb_ind];
+
+            if (pb.x <= pa.x) puts("HELLLOOOO");
+
+            for (int j = 1; j < slices[i].size(); ++j) {
+                pa_ind = slices[i][j - 1];
+                pb_ind = slices[i][j];
+
+                pa = particles[pa_ind];
+                pb = particles[pb_ind];
+
+                if (pb.y < pa.y) printf("%f <= %f\n", pb.y, pa.y);
+            }
+        }
+
+        for (int ia = 0; ia < slices.size(); ++ia)
+            for (int ja = 0; ja < slices[ia].size(); ++ja) {
+                int pa_ind = slices[ia][ja];
+                particle_t &pa = particles[pa_ind];
+
+                for (int ib = ia; ib < slices.size(); ++ib) {
+                    for (int jb = ja; jb < slices[ib].size(); ++jb) {
+                        int pb_ind = slices[ib][jb];
+                        particle_t &pb = particles[pb_ind];
+
+                        if ((pb.y - pa.y) > cutoff) break;
+
+                        useless_comps +=
+                            apply_force(pa, pb, &dmin, &davg, &navg);
+                        useless_comps +=
+                            apply_force(pb, pa, &dmin, &davg, &navg);
+                    }
+
+                    int pib0_ind = slices[ib][0];
+                    particle_t &pib0 = particles[pib0_ind];
+
+                    if ((pib0.x - pa.x) > cutoff) break;
+                }
+            }
+
+        slices.clear();
+
+        /*
         for (int i = 0; i < n; ++i) {
             particle_t &pi = particles[i];
 
@@ -67,6 +134,7 @@ int main(int argc, char **argv) {
                 }
             }
         }
+        */
 
         //
         //  move particles
@@ -121,6 +189,7 @@ int main(int argc, char **argv) {
     // Printing summary data
     //
     if (fsum) fprintf(fsum, "%d %g\n", n, simulation_time);
+    printf("useless comparison %lld\n", useless_comps);
 
     //
     // Clearing space

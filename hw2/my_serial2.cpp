@@ -72,6 +72,8 @@ int main(int argc, char **argv) {
         // -- 7 --
         {8 * GRID_SIDE + 2, 8 * GRID_SIDE + 3, 8 * GRID_SIDE + 4}};
 
+    long long useless_comps = 0;
+
     //
     //  simulate a number of time steps
     //
@@ -102,8 +104,9 @@ int main(int argc, char **argv) {
 
                     for (int j = 0; j < curr->size(); ++j) {
                         int pjind = curr->p[j];
-                        apply_force(particles[piind], particles[pjind], &dmin,
-                                    &davg, &navg);
+                        useless_comps +=
+                            apply_force(particles[piind], particles[pjind],
+                                        &dmin, &davg, &navg);
                     }
                 }
 
@@ -126,9 +129,9 @@ int main(int argc, char **argv) {
                                 for (int j = 0; j < target->size(); ++j) {
                                     int pjind = target->p[j];
 
-                                    apply_force(particles[piind],
-                                                particles[pjind], &dmin, &davg,
-                                                &navg);
+                                    useless_comps += apply_force(
+                                        particles[piind], particles[pjind],
+                                        &dmin, &davg, &navg);
                                 }
                             }
                         }
@@ -152,9 +155,9 @@ int main(int argc, char **argv) {
                                 for (int j = 0; j < target->size(); ++j) {
                                     int pjind = target->p[j];
 
-                                    apply_force(particles[piind],
-                                                particles[pjind], &dmin, &davg,
-                                                &navg);
+                                    useless_comps += apply_force(
+                                        particles[piind], particles[pjind],
+                                        &dmin, &davg, &navg);
                                 }
                             }
                         }
@@ -224,6 +227,8 @@ int main(int argc, char **argv) {
     // Printing summary data
     //
     if (fsum) fprintf(fsum, "%d %g\n", n, simulation_time);
+    printf("useless comparison %lld\n", useless_comps);
+ 
 
     //
     // Clearing space

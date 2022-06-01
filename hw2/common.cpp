@@ -78,12 +78,12 @@ void init_particles(int n, particle_t *p) {
 //
 //  interact two particles
 //
-void apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
+int apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
                  double *davg, int *navg) {
     double dx = neighbor.x - particle.x;
     double dy = neighbor.y - particle.y;
     double r2 = dx * dx + dy * dy;
-    if (r2 > cutoff * cutoff) return;
+    if (r2 > cutoff * cutoff) return 1;
     if (r2 != 0) {
         if (r2 / (cutoff * cutoff) < *dmin * (*dmin)) *dmin = sqrt(r2) / cutoff;
         (*davg) += sqrt(r2) / cutoff;
@@ -99,6 +99,8 @@ void apply_force(particle_t &particle, particle_t &neighbor, double *dmin,
     double coef = (1 - cutoff / r) / r2 / mass;
     particle.ax += coef * dx;
     particle.ay += coef * dy;
+
+    return 0;
 }
 
 //
